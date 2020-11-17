@@ -109,9 +109,8 @@ pip install -r requirements.txt
     --train_type 'ft' \
     --model_type 'Original' \
     --student_hidden_layers 12 \
-    --train_seed None \
     --saving_criterion_acc 0.8 \
-    --saving_criterion_loss 0 \
+    --saving_criterion_loss 0 
     ```
     The trained model will be saved in 'data/outputs/KD/{task}/teacher_12layer'
 
