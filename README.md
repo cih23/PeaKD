@@ -3,7 +3,7 @@ This package provides an implementation of Pea-KD, which is to improve KD perfor
 
 ## Overview
 #### Brief Explanation of the paper. 
-Two main ideas proposed in the paper. Shared Parameter Sharing (SPS) and Pretraining with Teacher's Predictions (PTP). 
+Two main ideas proposed in the paper. Shuffled Parameter Sharing (SPS) and Pretraining with Teacher's Predictions (PTP). 
 
 1) SPS 
 
@@ -44,10 +44,10 @@ PeaKD
   │    ├── models
   │    │     └── bert_base_uncased: ckpt
   │    └── outputs
-  │           └── KDAP: save teacher model prediction & trained student model.
+  │           └── save teacher model prediction & trained student model.
   ├── src : The overall utils. 
   ├── envs.py: save directory paths for several usage.
-  ├── run_glue_benchmark.py : save teacher prediction. Used for PTP, KD, PKD e.t.c. 
+  ├── save_teacher_outputs.py : save teacher prediction. Used for PTP, KD, PKD e.t.c. 
   ├── PTP.py : pretrain the student model with PTP. 
   └── NLI_KD_training.py: comprehensive training file for teacher and student models.
   
@@ -86,19 +86,28 @@ cd PeaKD
 ```
 
 ### Training & Testing 
+* We provide an example how to run the codes. We use task: 'MRPC', teacher layer:3, and student layer: 3 as an example.
 * Before starting, we need to specify a few things.
-    * student_layer : The number of student layers, default = 3. Main target is students with 1~3 layers. (can change in 'KDAP/src/argument_parser.py')
-    * learning baseline : KD or PKD.
-    * model_mode : whether to use the original BERT model or MPS model. default = MPS model. Check lines 177~181 in 'NLI_KD_training.py'.
-    * task : need to specify which dataset you want to train & test on. In this code, it is set to 'MRPC' as default. Check lines 35~54 in 'NLI_KD_training.py'
-    * early stopping: during the entire training we adopt early stopping based on validation loss or accuracy. Thus, 
-    we evaluate the model on the validation set every step in the training process. Thus it could take significant amount of time. 
-You can change this in lines 354~401 in 'NLI_KD_training.py'. 
+    * task: one of the GLUE datasets
+    * train_type: one of the followings - ft, kd, pkd 
+    * model_type: one of the followings - Original, SPS
+    * student_hidden_layers: the number of student layers
+    * train_seed: the train seed to use. If default -> random 
+    * PTP_seed: the seed to use for PTP. If default -> random
+    * saving_criterion_acc: if the model's val accuracy is above this value, we save the model.
+    * saving_criterion_loss: if the model's val loss is below this value, we save the model.
+    * load_model: specify a directory if you want to load a checkpoint.
 * First, We begin with finetuning the teacher model. do the followings:
     ```
-    uncomment one of lines 36~39 in 'KDAP/NLI_KD_training.py' 
     run script
-    python KDAP/NLI_KD_training.py 
+    python PeaKD/NLI_KD_training.py \
+    --task 'MRPC' \
+    --train_type 'ft' \
+    --model_type 'Original' \
+    --student_hidden_layers 12 \
+    --train_seed None \
+    --saving_criterion_acc 0.8 \
+    --saving_criterion_loss 0 \
     ```
     The trained model will be saved in 'data/outputs/KDAP/{task}/teacher_12layer'
 
