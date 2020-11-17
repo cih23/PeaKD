@@ -97,7 +97,7 @@ cd PeaKD
     * saving_criterion_acc: if the model's val accuracy is above this value, we save the model.
     * saving_criterion_loss: if the model's val loss is below this value, we save the model.
     * load_model: specify a directory if you want to load a checkpoint.
-* First, We begin with finetuning the teacher model. do the followings:
+* First, We begin with finetuning the teacher model
     ```
     run script
     python PeaKD/NLI_KD_training.py \
@@ -109,51 +109,41 @@ cd PeaKD
     --saving_criterion_acc 0.8 \
     --saving_criterion_loss 0 \
     ```
-    The trained model will be saved in 'data/outputs/KDAP/{task}/teacher_12layer'
+    The trained model will be saved in 'data/outputs/KD/{task}/teacher_12layer'
 
-* To save the teacher model's predictions, run script:
+* To use the teacher model's predictions for example for PTP, KD, PKD do the followings:
     ```
-    check line 115 and 124 in 'KDAP/run_glue_benchmark.py'
+    check lines 56 ~ 60 in 'PeaKD/save_teacher_outputs.py'
+    run script:
+    python PeaKD/save_teacher_outputs.py
+    ```
+    The teacher predictions will be saved in 'PeaKD/data/outputs/KD/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
+    or 'PeaKD/data/outputs/KD/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
+
+* To apply PTP to the student model, run script:
+    ```
+    python PeaKD/PTP.py \
+    --task 'MRPC' \
+    --train_type 'ft' \
+    --model_type 'SPS' \
+    --student_hidden_layer 3 \
+    --PTP_seed None \
+    ```
+    The pretrained student model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'. 
+    you may specify the hyperparameter 't' in PeaKD/src/nli_data_processing.py line 713~.
+* When PTP is done, we can finally finetune the student model by doing the followings:
+    ```
     run script
-    python KDAP/run_glue_benchmark.py
+    python PeaKD/NLI_KD_training.py \
+    --task 'MRPC' \
+    --train_type 'pkd' \
+    --model_type 'SPS' \
+    --student_hidden_layers 3 \
+    --train_seed None \
+    --saving_criterion_acc 1.0 \
+    --saving_criterion_loss 0.0 \
+    --load_model '~/PeaKD/data/outputs/KD/MRPC/teacher_12layer/~.pkl' 
     ```
-    The teacher predictions will be saved in 'data/outputs/KDAP/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
-    or 'data/outputs/KDAP/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
-
-* To TTR-pretrain the student model do the followings:
-    ```
-    modify lines 655~663 in 'KDAP/src/nli_data_processing.py'
-    uncomment one of the lines 44~46 in 'KDAP/TTRP.py'
-    modify lines 84~99 in 'KDAP/TTRP.py'
-    run script 
-    python KDAP/TTRP.py 
-    ```
-    The pretrained student model will be saved in 'data/outputs/KDAP/{task}/teacher_12layer'. 
-* When TTR-pretraining is done, we can finally finetune the student model by doing the followingst:
-    ```
-    modify line 64 in 'KDAP/NLI_KD_training.py'
-    run script
-    python KDAP/NLI_KD_training.py 
-    ```
-    The finetuned student model will be saved in 'data/outputs/KDAP/{task}/teacher_12layer' 
-
-* Example results: 
-
-    (1) task = MRPC, student_layer = 3
-
-    - Original BERT model = 77.69%
-
-    - MPS model = 81.37% 
- 
-    - MPS + TTRP = 83.57%
-    
-    (2) task = RTE, student_layer = 3
-    
-    - Original BERT model = 61.37%
-    
-    - MPS model = 68.59% 
-    
-    - MPS + TTRP = 70.03%
 
 ## Contact
 
