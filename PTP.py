@@ -349,7 +349,7 @@ if args.do_train:
                     logger.info("Validation Accuracy improved! "+str(eval_best_acc)+" -> "+str(eval_acc_1))
                     logger.info('='*77)
                     eval_best_acc = eval_acc_1
-                    if eval_best_acc > 1:
+                    if eval_best_acc > args.saving_criterion_acc:
                         if args.n_gpu > 1:
                             torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_acc.pkl'))
                             torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_acc.pkl'))
@@ -364,14 +364,14 @@ if args.do_train:
                     logger.info("Validation improved! "+str(eval_loss_min)+" -> "+str(eval_loss))
                     logger.info('='*77)
                     eval_loss_min = eval_loss
-                    if eval_loss < 0.63:
+                    if eval_loss < args.saving_criterion_loss:
                         if args.n_gpu > 1:
                             torch.save(student_encoder.module.state_dict(), \
-                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder.pkl'))
+                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_loss.pkl'))
                             torch.save(student_classifier.module.state_dict(), \
-                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls.pkl'))
+                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_loss.pkl'))
                         
                         else:
-                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'.e.{epoch}_encoder.pkl'))
-                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, output_model_file + f'.e.{epoch}_cls.pkl'))
+                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'.e.{epoch}_encoder_loss.pkl'))
+                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, output_model_file + f'.e.{epoch}_cls_loss.pkl'))
                         logger.info("Saving the model...")        
