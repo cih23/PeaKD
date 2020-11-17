@@ -33,10 +33,6 @@ parser = default_parser()
 DEBUG = True
 logger.info("IN CMD MODE")
 args = parser.parse_args()
-print("train_type: ", args.train_type)
-print("model_type: ", args.model_type)
-print("train_seed: ", args.train_seed)
-print("PTP_seed: ", args.PTP_seed)
 train_seed_fixed = args.train_seed
 PTP_seed_fixed = args.PTP_seed
 saving_criterion_acc_fixed = args.saving_criterion_acc
