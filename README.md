@@ -145,11 +145,11 @@ pip install -r requirements.txt
     --train_type 'pkd' \
     --model_type 'SPS' \
     --student_hidden_layers 3 \
-    --train_seed None \
     --saving_criterion_acc 1.0 \
     --saving_criterion_loss 0.0 \
-    --load_model '~/PeaKD/data/outputs/KD/MRPC/teacher_12layer/~.pkl' 
+    --load_model '/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/~.pkl' 
     ```
+    note that you need to specify the --load_model directory.
 
 ## Contact
 
