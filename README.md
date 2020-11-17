@@ -84,8 +84,9 @@ PeaKD
 ## Clone the repository
 
 ```
-git clone https://monet.snu.ac.kr/gitlab/snudatalab/vet/VTT-project.git
+git clone https://github.com/cih23/PeaKD
 cd PeaKD
+pip install -r requirements.txt
 ```
 
 ## Run Training  
