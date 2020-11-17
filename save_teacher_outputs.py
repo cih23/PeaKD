@@ -56,8 +56,8 @@ n_layer = 12
 #specify the task.
 task = 'MRPC'
 #specify the directory of saved teacher model.
-encoder_file = "/home/ikhyuncho23/KDAP/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-5/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.encoder_acc.pkl"
-cls_file = "/home/ikhyuncho23/KDAP/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-5/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.cls_acc.pkl"
+encoder_file = "/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-1/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.encoder_acc.pkl"
+cls_file = "/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-1/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.cls_acc.pkl"
 
 
 encoder_bert, classifier = init_model(task, output_all_layers, n_layer, config)
