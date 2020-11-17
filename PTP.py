@@ -128,7 +128,7 @@ for a in args_dict:
 train_type = 'finetune'
 
 # Specify where the teacher summary is saved in the below line.
-teacher_summary = f'/home/ikhyuncho23/KDAP/data/outputs/KD/MRPC/MRPC_patient_kd_teacher_12layer_result_summary.pkl'
+teacher_summary = f'/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/MRPC_patient_kd_teacher_12layer_result_summary.pkl'
 
 train_dataloader, all_label_ids = get_pretrain_dataloader_PTP(task_name = args.task, types = 'train', train_type = train_type, teacher_summary = teacher_summary)    
 eval_dataloader, eval_label_ids = get_pretrain_dataloader_PTP(task_name = args.task, types = 'dev', train_type ='dontmatter', teacher_summary=teacher_summary)
