@@ -116,7 +116,7 @@ cd PeaKD
 
 * To use the teacher model's predictions for example for PTP, KD, PKD do the followings:
     ```
-    check lines 56 ~ 60 in 'PeaKD/save_teacher_outputs.py'
+    modify lines 56 ~ 60 in 'PeaKD/save_teacher_outputs.py'
     run script:
     python PeaKD/save_teacher_outputs.py
     ```
