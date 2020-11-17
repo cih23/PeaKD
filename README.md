@@ -112,7 +112,7 @@ pip install -r requirements.txt
     --saving_criterion_acc 0.8 \
     --saving_criterion_loss 0 
     ```
-    The trained model will be saved in 'data/outputs/KD/{task}/teacher_12layer'
+    The trained model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'
 
 * To use the teacher model's predictions for example for PTP, KD, PKD do the followings:
     ```
