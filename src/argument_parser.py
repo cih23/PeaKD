@@ -287,18 +287,18 @@ def get_predefine_argv(args, mode='glue', task_name='RTE', train_type='kd', stud
                 '--kd_model', 'kd',
                 '--alpha', '0.7',
                 '--T', '10',
-                '--teacher_prediction', f'~/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
+                '--teacher_prediction', f'/home/ikhyuncho23/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
             ]
         elif train_type == 'pkd':
             argv += [
                 '--student_hidden_layers', str(student_layers),
-                '--kd_model', 'kd.cls',
+                '--kd_model', 'pkd',
                 '--alpha', '0.7',
                 '--beta', '100',
                 '--T', '10',
                 '--teacher_prediction', 
-                f'~/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
-                '--fc_layer_idx', '3,7',   # this for pkd-skip
+                f'/home/ikhyuncho23/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
+                '--fc_layer_idx', '1,3,5,7,9',   # this for pkd-skip
                 '--normalize_patience', 'True',
             ]
     else:
