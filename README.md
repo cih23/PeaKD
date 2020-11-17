@@ -123,14 +123,15 @@ pip install -r requirements.txt
     The teacher predictions will be saved in 'PeaKD/data/outputs/KD/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
     or 'PeaKD/data/outputs/KD/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
 
-* To apply PTP to the student model, run script:
+* To apply PTP to the student model, do the following:
     ```
+    modify line 131 in PeaKD/PTP.py
+    run script:
     python PeaKD/PTP.py \
     --task 'MRPC' \
     --train_type 'ft' \
     --model_type 'SPS' \
-    --student_hidden_layer 3 \
-    --PTP_seed None \
+    --student_hidden_layer 3 
     ```
     The pretrained student model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'. 
     you may specify the hyperparameter 't' in PeaKD/src/nli_data_processing.py line 713~.
