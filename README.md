@@ -131,7 +131,9 @@ pip install -r requirements.txt
     --task 'MRPC' \
     --train_type 'ft' \
     --model_type 'SPS' \
-    --student_hidden_layer 3 
+    --student_hidden_layer 3 \
+    --student_hidden_layers 12 \
+    --saving_criterion_acc 0.8 
     ```
     The pretrained student model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'. 
     you may specify the hyperparameter 't' in PeaKD/src/nli_data_processing.py line 713~.
