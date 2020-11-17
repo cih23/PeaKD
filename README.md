@@ -76,16 +76,16 @@ PeaKD
 * pandas
 * apex
 
-## Getting Started
+# Getting Started
 
-### Clone the repository
+## Clone the repository
 
 ```
 git clone https://monet.snu.ac.kr/gitlab/snudatalab/vet/VTT-project.git
 cd PeaKD
 ```
 
-### Run Training  
+## Run Training  
 * We provide an example how to run the codes. We use task: 'MRPC', teacher layer: 3, and student layer: 3 as an example.
 * Before starting, we need to specify a few things.
     * task: one of the GLUE datasets
