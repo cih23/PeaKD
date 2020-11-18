@@ -4,7 +4,7 @@ import os
 import random
 import torch
 
-from envs import HOME_DATA_FOLDER
+from envs import HOME_DATA_FOLDER, HOME_OUTPUT_FOLDER
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,14 @@ def default_parser():
                         help="The name of the task for training.")
 
     # System related parameters
+#     parser.add_argument("--output_dir",
+#                         default=os.path.join(HOME_DATA_FOLDER, 'outputs'),
+#                         type=str,
+#                         help="The output directory where the model checkpoints will be written.")
     parser.add_argument("--output_dir",
-                        default=os.path.join(HOME_DATA_FOLDER, 'outputs'),
-                        type=str,
+                        default = None,
+                        type = str,
                         help="The output directory where the model checkpoints will be written.")
-
     parser.add_argument("--log_every_step",
                         default=1,
                         type=int,
@@ -61,15 +64,11 @@ def default_parser():
     parser.add_argument('--model_type',
                         type=str,
                         default='Original',
-                        help="Model type: one of original or SPS")
+                        help="Model type: one of Original or SPS")
     parser.add_argument('--train_seed',
                         type=int,
                         default=None,
                         help="random seed for training")
-    parser.add_argument('--PTP_seed',
-                        type=int,
-                        default=None,
-                        help="random seed for PTP_training")
     parser.add_argument('--saving_criterion_acc',
                         type=float,
                         default=1.0,
@@ -78,10 +77,14 @@ def default_parser():
                         type=float,
                         default=0.0,
                         help="If the model's val loss is lower than this value, we save the model.")
-    parser.add_argument('--load_model',
+    parser.add_argument('--load_model_dir',
                         type =str,
                         default = None,
                         help="Load model")
+    parser.add_argument('--save_model_dir',
+                        type = str,
+                        default = None,
+                        help="Specify the directory where to save the final model")
     parser.add_argument('--seed',
                         type=int,
                         default=None,
@@ -187,37 +190,49 @@ def default_parser():
     return parser
 
 
-def complete_argument(args):
+def complete_argument(args, out_dir, load_dir = None):
     MODEL_FOLDER = os.path.join(HOME_DATA_FOLDER, 'models')
     if args.student_hidden_layers in [None, 'None']:
         args.student_hidden_layers = 12 if 'base' in args.bert_model else 24
     args.bert_model = os.path.join(MODEL_FOLDER, 'pretrained', args.bert_model)
 
-    if args.encoder_checkpoint not in [None, 'None']:
-        args.encoder_checkpoint = os.path.join(MODEL_FOLDER, args.encoder_checkpoint)
-    else:
+#     if args.encoder_checkpoint not in [None, 'None']:
+#         args.encoder_checkpoint = os.path.join(MODEL_FOLDER, args.encoder_checkpoint)
+#     else:
+#         args.encoder_checkpoint = os.path.join(MODEL_FOLDER, 'pretrained', args.bert_model, 'pytorch_model.bin')
+#         #logger.info('encoder checkpoint not provided, use pre-trained at %s instead' % args.encoder_checkpoint)
+    if args.encoder_checkpoint is None:
         args.encoder_checkpoint = os.path.join(MODEL_FOLDER, 'pretrained', args.bert_model, 'pytorch_model.bin')
-        #logger.info('encoder checkpoint not provided, use pre-trained at %s instead' % args.encoder_checkpoint)
+        logger.info('encoder checkpoint not provided, use pre-trained at %s instead' % args.encoder_checkpoint)
+        
     if args.cls_checkpoint not in [None, 'None']:
         args.cls_checkpoint = os.path.join(MODEL_FOLDER, args.cls_checkpoint)
 
-    if args.kd_model == 'kd.cls':
-        output_name = args.kd_model + '.' + str(args.normalize_patience) + '_' + args.task_name + '_nlayer.' + str(args.student_hidden_layers)
-    else:
-        output_name = args.kd_model + '_' + args.task_name + '_nlayer.' + str(args.student_hidden_layers)
-    output_name += '_lr.' + str(args.learning_rate) + '_T.' + str(args.T) + '_alpha.' + str(args.alpha)
-    output_name += '_beta.' + str(args.beta) + '_bs.' + str(args.train_batch_size)
-    args.output_dir = os.path.join(args.output_dir, output_name)
+#     if args.kd_model == 'kd.cls':
+#         output_name = args.kd_model + '.' + str(args.normalize_patience) + '_' + args.task_name + '_nlayer.' + str(args.student_hidden_layers)
+#     else:
+#         output_name = args.kd_model + '_' + args.task_name + '_nlayer.' + str(args.student_hidden_layers)
+#     output_name += '_lr.' + str(args.learning_rate) + '_T.' + str(args.T) + '_alpha.' + str(args.alpha)
+#     output_name += '_beta.' + str(args.beta) + '_bs.' + str(args.train_batch_size)
+    if out_dir is None:
+        raise ValueError("Must specify the output directory where the results will be written and saved")
+    else:   
+        args.output_dir = os.path.join(HOME_OUTPUT_FOLDER, args.task_name)
+        args.output_dir = os.path.join(args.output_dir, out_dir)
 
-    run = 1
-    while os.path.exists(args.output_dir + '-run-' + str(run)):
-        if is_folder_empty(args.output_dir + '-run-' + str(run)):
-            #logger.info('folder exist but empty, use it as output')
-            break
-        #logger.info(args.output_dir + '-run-' + str(run) + ' exist, trying next')
-        run += 1
-    args.output_dir += '-run-' + str(run)
+#     run = 1
+#     while os.path.exists(args.output_dir + '-run-' + str(run)):
+#         if is_folder_empty(args.output_dir + '-run-' + str(run)):
+#             #logger.info('folder exist but empty, use it as output')
+#             break
+#         #logger.info(args.output_dir + '-run-' + str(run) + ' exist, trying next')
+#         run += 1
+#     args.output_dir += '-run-' + str(run)
+    
     os.makedirs(args.output_dir, exist_ok=True)
+    if load_dir is not None:
+        args.load_model_dir = os.path.join(HOME_OUTPUT_FOLDER, args.task_name)
+        args.load_model_dir = os.path.join(args.load_model_dir, load_dir)
 
     if args.task_name == 'MNLI':
         args.output_dir_mm = args.output_dir.replace('MNLI', 'MNLI-mm', 100)
@@ -234,10 +249,6 @@ def complete_argument(args):
         args.train_seed = random.randint(0, 100000000)
         #args.seed = 50447861
         #logger.info('random train seed = %d' % args.train_seed)
-        
-    if args.PTP_seed is None:
-        args.PTP_seed = random.randint(0, 100000000)
-        #logger.info('random PTP seed = %d' % args.PTP_seed)
 
     return args
 
@@ -263,7 +274,6 @@ def get_predefine_argv(args, mode='glue', task_name='RTE', train_type='kd', stud
                 '--eval_batch_size', '32',
                 '--gradient_accumulation_steps', '1',
                 '--log_every_step', '1',
-                '--output_dir', os.path.join(HOME_DATA_FOLDER, f'outputs/KD/{task_name}/teacher_12layer'),
                 '--do_train', 'True',
                 '--do_eval', 'True',
                 '--fp16', 'False',
@@ -282,22 +292,24 @@ def get_predefine_argv(args, mode='glue', task_name='RTE', train_type='kd', stud
                 '--alpha', '0.0',
             ]
         elif train_type == 'kd':
+            teacher_pred = HOME_OUTPUT_FOLDER+f'/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl'
             argv += [
                 '--student_hidden_layers', str(student_layers),
                 '--kd_model', 'kd',
                 '--alpha', '0.7',
                 '--T', '10',
-                '--teacher_prediction', f'/home/ikhyuncho23/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
+                '--teacher_prediction', teacher_pred,
             ]
         elif train_type == 'pkd':
+            teacher_pred = HOME_OUTPUT_FOLDER+f'/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl'
             argv += [
                 '--student_hidden_layers', str(student_layers),
-                '--kd_model', 'pkd',
+                '--kd_model', 'kd.cls',
                 '--alpha', '0.7',
                 '--beta', '100',
                 '--T', '10',
                 '--teacher_prediction', 
-                f'/home/ikhyuncho23/PeaKD/data/outputs/KD/{task_name}/{task_name}_patient_kd_teacher_12layer_result_summary.pkl',
+                teacher_pred,
                 '--fc_layer_idx', '1,3,5,7,9',   # this for pkd-skip
                 '--normalize_patience', 'True',
             ]
