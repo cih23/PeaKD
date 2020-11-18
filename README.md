@@ -86,10 +86,26 @@ PeaKD
 ```
 git clone https://github.com/cih23/PeaKD
 cd PeaKD
+```
+
+## Install requirements
+```
 pip install -r requirements.txt
 ```
 
-## Run Training  
+## Download Glue data sets 
+```
+cd data/data_raw/
+python download_glue_data.py --data_dir glue_data --tasks all
+```
+
+## Demo 
+you can run the demo version.
+```
+make
+```
+
+## Run your own training  
 * We provide an example how to run the codes. We use task: 'MRPC', teacher layer: 3, and student layer: 3 as an example.
 * Before starting, we need to specify a few things.
     * task: one of the GLUE datasets
