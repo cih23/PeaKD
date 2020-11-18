@@ -113,10 +113,9 @@ make
     * model_type: one of the followings - Original, SPS
     * student_hidden_layers: the number of student layers
     * train_seed: the train seed to use. If default -> random 
-    * PTP_seed: the seed to use for PTP. If default -> random
     * saving_criterion_acc: if the model's val accuracy is above this value, we save the model.
     * saving_criterion_loss: if the model's val loss is below this value, we save the model.
-    * load_model: specify a directory if you want to load a checkpoint.
+    * load_model_dir: specify a directory of the checkpoint if you want to load it.
 * First, We begin with finetuning the teacher model
     ```
     run script
@@ -125,48 +124,45 @@ make
     --train_type 'ft' \
     --model_type 'Original' \
     --student_hidden_layers 12 \
-    --saving_criterion_acc 0.8 \
-    --saving_criterion_loss 0 
+    --saving_criterion_acc 1.0 \
+    --saving_criterion_loss 0 .6 \
+    --output_dir 'run-1'
     ```
     The trained model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'
 
-* To use the teacher model's predictions for example for PTP, KD, PKD do the followings:
+* To use the teacher model's predictions for example for PTP, KD, and PKD run script:
     ```
-    modify lines 56 ~ 60 in 'PeaKD/save_teacher_outputs.py'
-    run script:
     python PeaKD/save_teacher_outputs.py
     ```
     The teacher predictions will be saved in 'PeaKD/data/outputs/KD/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
     or 'PeaKD/data/outputs/KD/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
 
-* To apply PTP to the student model, do the following:
+* To apply PTP to the student model, run script:
     ```
-    modify line 131 in PeaKD/PTP.py
     run script:
     python PeaKD/PTP.py \
     --task 'MRPC' \
     --train_type 'ft' \
     --model_type 'SPS' \
     --student_hidden_layer 3 \
-    --student_hidden_layers 12 \
-    --saving_criterion_acc 0.8 
+    --saving_criterion_acc 0.8 \
+    --output_dir 'run-1'
     ```
     The pretrained student model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'. 
     you may specify the hyperparameter 't' in PeaKD/src/nli_data_processing.py line 713~.
-* When PTP is done, we can finally finetune the student model by doing the followings:
+* When PTP is done, we can finally finetune the student model by running script:
     ```
-    run script
     python PeaKD/NLI_KD_training.py \
     --task 'MRPC' \
     --train_type 'pkd' \
     --model_type 'SPS' \
     --student_hidden_layers 3 \
     --saving_criterion_acc 1.0 \
-    --saving_criterion_loss 0.0 \
-    --load_model '/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/~.pkl' 
+    --saving_criterion_loss 0.6 \
+    --load_model_dir 'run-1/PTP.encoder_loss.pkl' \
+    --output_dir 'run-1/final_results'
     ```
-    note that you need to specify the --load_model directory.
-
+    
 ## Contact
 
 - Ikhyun Cho (ikhyuncho@snu.ac.kr)
