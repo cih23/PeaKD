@@ -34,13 +34,14 @@ DEBUG = True
 logger.info("IN CMD MODE")
 args = parser.parse_args()
 train_seed_fixed = args.train_seed
-PTP_seed_fixed = args.PTP_seed
 saving_criterion_acc_fixed = args.saving_criterion_acc
 saving_criterion_loss_fixed = args.saving_criterion_loss
 train_batch_size_fixed = args.train_batch_size
 eval_batch_size_fixed = args.eval_batch_size
 model_type_fixed = args.model_type
-load_model_fixed = args.load_model
+save_model_dir_fixed = args.save_model_dir
+output_dir_fixed = args.output_dir
+load_model_dir_fixed = args.load_model_dir
 #teacher_num = args.teacher_numb
 if DEBUG:
     logger.info("IN DEBUG MODE")
@@ -54,11 +55,12 @@ else:
     logger.info("IN CMD MODE")
     args = parser.parse_args()
 
-args = complete_argument(args)
+args.output_dir = output_dir_fixed
+if load_model_dir_fixed is not None:
+    args.load_model_dir = load_model_dir_fixed
+args = complete_argument(args, args.output_dir, args.load_model_dir)
 if train_seed_fixed is not None:
     args.train_seed = train_seed_fixed
-if PTP_seed_fixed is not None:
-    args.PTP_seed = PTP_seed_fixed
 if saving_criterion_acc_fixed is not None:
     args.saving_criterion_acc = saving_criterion_acc_fixed
 if saving_criterion_loss_fixed is not None:
@@ -67,24 +69,11 @@ if train_batch_size_fixed is not None:
     args.train_batch_size = train_batch_size_fixed
 if eval_batch_size_fixed is not None:
     args.eval_batch_size = eval_batch_size_fixed
-if load_model_fixed is not None:
-    args.load_model = load_model_fixed
+if save_model_dir_fixed is not None:
+    args.save_model_dir = save_model_dir_fixed
+if args.load_model_dir is not None:
+    args.encoder_checkpoint = args.load_model_dir
 args.model_type = model_type_fixed
-#############################################################################
-# Reproducing the results of 92.9% in MRPC dev set.
-# args.learning_rate = 2e-5
-# args.train_batch_size = 64
-# args.num_train_epochs = 10
-# args.beta = 40
-#args.seed = 71617233
-
-if args.load_model is not None:
-    args.encoder_checkpoint = args.load_model
-#args.teacher_prediction = f'/home/ikhyuncho23/KDST/KDAP/data/outputs/KD/MRPC/MRPC_patient_kd_teacher_12layer_result_summary_loss_9.pkl'
-######## After PTP-pretraining, uncomment below line and specify the directory where PTP-pretrained model is saved. Below is an example. ########
-#args.encoder_checkpoint = ""
-################################################################################################################################################
-
 args.raw_data_dir = os.path.join(HOME_DATA_FOLDER, 'data_raw', args.task_name)
 args.feat_data_dir = os.path.join(HOME_DATA_FOLDER, 'data_feat', args.task_name)
 
@@ -92,6 +81,8 @@ args.train_batch_size = args.train_batch_size // args.gradient_accumulation_step
 logger.info('actual batch size on all GPU = %d' % args.train_batch_size)
 device, n_gpu = args.device, args.n_gpu
 
+###################################################################################################################################
+    
 random.seed(args.train_seed)
 np.random.seed(args.train_seed)
 torch.manual_seed(args.train_seed)
@@ -268,10 +259,10 @@ if args.do_train:
 #########################################################################
 # Model Training
 #########################################################################
-output_model_file = '{}_nlayer.{}_lr.{}_T.{}.alpha.{}_beta.{}_bs.{}'.format(args.task_name, args.student_hidden_layers,
-                                                                            args.learning_rate,
-                                                                            args.T, args.alpha, args.beta,
-                                                                            args.train_batch_size * args.gradient_accumulation_steps)
+# output_model_file = '{}_nlayer.{}_lr.{}_T.{}.alpha.{}_beta.{}_bs.{}'.format(args.task_name, args.student_hidden_layers,
+#                                                                             args.learning_rate,
+#                                                                             args.T, args.alpha, args.beta,
+#                                                                             args.train_batch_size * args.gradient_accumulation_steps)
 if args.do_train:
     global_step = 0
     nb_tr_steps = 0
@@ -393,6 +384,7 @@ if args.do_train:
                     preds = np.argmax(test_res['pred_logit'], axis=1).flatten()
                     result_ = compute_metrics('mrpc', preds, eval_label_ids.numpy())
                 # Saving checkpoints when the conditions below are met.  
+                print('{},{},{}'.format(epoch+1, result_['f1'], test_res['loss']), file=log_eval)
                 if result_['f1'] > eval_best_f1:
                     logger.info("")
                     logger.info('='*77)
@@ -402,11 +394,11 @@ if args.do_train:
                     eval_best_f1 = result_['f1']
                     if eval_best_f1 > args.saving_criterion_acc:
                         if args.n_gpu > 1:
-                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'.encoder_acc.pkl'))
-                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'.cls_acc.pkl'))
+                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.encoder_acc.pkl'))
+                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.cls_acc.pkl'))
                         else:
-                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_acc.pkl'))
-                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_acc.pkl'))
+                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.encoder_acc.pkl'))
+                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.cls_acc.pkl'))
                         logger.info("Saving the model...")
                 if result_['acc'] > eval_best_acc:
                     logger.info("")
@@ -422,11 +414,11 @@ if args.do_train:
                     eval_loss_min = test_res['loss']
                     if eval_loss_min < args.saving_criterion_loss:
                         if args.n_gpu > 1:
-                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'.encoder_loss.pkl'))
-                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'.cls_loss.pkl'))
+                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.encoder_loss.pkl'))
+                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.cls_loss.pkl'))
                         else:
-                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_loss.pkl'))
-                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_loss.pkl'))
+                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.encoder_loss.pkl'))
+                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, 'BERT'+f'.cls_loss.pkl'))
                         logger.info("Saving the model...")
                         
                                
