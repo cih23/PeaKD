@@ -9,7 +9,7 @@ import torch
 import pandas as pd
 from torch.utils.data import RandomSampler, SequentialSampler
 from tqdm import tqdm, trange
-from envs import PROJECT_FOLDER, HOME_DATA_FOLDER
+from envs import PROJECT_FOLDER, HOME_DATA_FOLDER, HOME_OUTPUT_FOLDER
 
 from BERT.pytorch_pretrained_bert.modeling import BertConfig
 from BERT.pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
@@ -37,39 +37,17 @@ DEBUG = True
 logger.info("IN CMD MODE")
 args = parser.parse_args()
 train_seed_fixed = args.train_seed
-PTP_seed_fixed = args.PTP_seed
 saving_criterion_acc_fixed = args.saving_criterion_acc
 saving_criterion_loss_fixed = args.saving_criterion_loss
 train_batch_size_fixed = args.train_batch_size
 eval_batch_size_fixed = args.eval_batch_size
 model_type_fixed = args.model_type
+load_model_dir_fixed = args.load_model_dir
+save_model_dir_fixed = args.save_model_dir
+output_dir_fixed = args.output_dir
 if DEBUG:
     logger.info("IN DEBUG MODE")
-    argv = get_predefine_argv(args, 'glue', args.task, args.train_type, args.student_hidden_layers)
-    # run simple fune-tuning *teacher* by uncommenting below cmd
-    #argv = get_predefine_argv('glue', 'RTE', 'finetune_teacher')
-    #argv = get_predefine_argv('glue', 'MRPC', 'finetune_teacher')
-    #argv = get_predefine_argv('glue', 'SST-2', 'finetune_teacher')
-    #argv = get_predefine_argv('glue', 'QNLI', 'finetune_teacher')
-
-    # run simple fune-tuning *student* by uncommenting below cmd
-    #argv = get_predefine_argv('glue', 'RTE', 'finetune_student')
-    #argv = get_predefine_argv('glue', 'SST-2', 'finetune_student')
-    #argv = get_predefine_argv('glue', 'MRPC', 'finetune_student')
-    #argv = get_predefine_argv('glue', 'QNLI', 'finetune_student')
-    
-    # run vanilla KD by uncommenting below cmd
-    #argv = get_predefine_argv('glue', 'RTE', 'kd')
-    #argv = get_predefine_argv('glue', 'MRPC', 'kd')
-    #argv = get_predefine_argv('glue', 'SST-2', 'kd')
-    #argv = get_predefine_argv('glue', 'QNLI', 'kd')
-
-    # run Patient Teacher by uncommenting below cmd
-    #argv = get_predefine_argv('glue', 'RTE', 'kd.cls')
-    #argv = get_predefine_argv('glue', 'MRPC', 'kd.cls')
-    #argv = get_predefine_argv('glue', 'SST-2', 'kd.cls')
-    #argv = get_predefine_argv('glue', 'QNLI', 'kd.cls')
-    
+    argv = get_predefine_argv(args, 'glue', args.task, args.train_type, args.student_hidden_layers)    
     try:
         args = parser.parse_args(argv)
     except NameError:
@@ -77,11 +55,11 @@ if DEBUG:
 else:
     logger.info("IN CMD MODE")
     args = parser.parse_args()
-args = complete_argument(args)
+args.output_dir = output_dir_fixed
+args = complete_argument(args, args.output_dir)
+
 if train_seed_fixed is not None:
     args.train_seed = train_seed_fixed
-if PTP_seed_fixed is not None:
-    args.PTP_seed = PTP_seed_fixed
 if saving_criterion_acc_fixed is not None:
     args.saving_criterion_acc = saving_criterion_acc_fixed
 if saving_criterion_loss_fixed is not None:
@@ -90,20 +68,13 @@ if train_batch_size_fixed is not None:
     args.train_batch_size = train_batch_size_fixed
 if eval_batch_size_fixed is not None:
     args.eval_batch_size = eval_batch_size_fixed
+if load_model_dir_fixed is not None:
+    args.load_model_dir = load_model_dir_fixed
+    args.encoder_checkpoint = args.load_model_dir
+if save_model_dir_fixed is not None:
+    args.save_model_dir = save_model_dir_fixed
+
 args.model_type = model_type_fixed
-#########################################################################
-# for restoration 
-#########################################################################
-
-
-#args.seed = 80301814
-
-
-
-#########################################################################
-
-
-
 args.raw_data_dir = os.path.join(HOME_DATA_FOLDER, 'data_raw', args.task_name)
 args.feat_data_dir = os.path.join(HOME_DATA_FOLDER, 'data_feat', args.task_name)
 
@@ -111,11 +82,11 @@ args.train_batch_size = args.train_batch_size // args.gradient_accumulation_step
 logger.info('actual batch size on all GPU = %d' % args.train_batch_size)
 device, n_gpu = args.device, args.n_gpu
 
-random.seed(args.PTP_seed)
-np.random.seed(args.PTP_seed)
-torch.manual_seed(args.PTP_seed)
+random.seed(args.train_seed)
+np.random.seed(args.train_seed)
+torch.manual_seed(args.train_seed)
 if args.n_gpu > 0:
-    torch.cuda.manual_seed_all(args.PTP_seed)
+    torch.cuda.manual_seed_all(args.train_seed)
 
 logger.info('Input Argument Information')
 args_dict = vars(args)
@@ -128,7 +99,7 @@ for a in args_dict:
 train_type = 'finetune'
 
 # Specify where the teacher summary is saved in the below line.
-teacher_summary = f'/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/MRPC_patient_kd_teacher_12layer_result_summary.pkl'
+teacher_summary = os.path.join(HOME_OUTPUT_FOLDER, 'MRPC/MRPC_patient_kd_teacher_12layer_result_summary.pkl')
 
 train_dataloader, all_label_ids = get_pretrain_dataloader_PTP(task_name = args.task, types = 'train', train_type = train_type, teacher_summary = teacher_summary)    
 eval_dataloader, eval_label_ids = get_pretrain_dataloader_PTP(task_name = args.task, types = 'dev', train_type ='dontmatter', teacher_summary=teacher_summary)
@@ -213,10 +184,10 @@ if args.do_train:
 #########################################################################
 # Model Training
 #########################################################################
-output_model_file = '{}_nlayer.{}_lr.{}_T.{}.alpha.{}_beta.{}_bs.{}'.format(args.task_name, args.student_hidden_layers,
-                                                                            args.learning_rate,
-                                                                            args.T, args.alpha, args.beta,
-                                                                            args.train_batch_size * args.gradient_accumulation_steps)
+# output_model_file = '{}_nlayer.{}_lr.{}_T.{}.alpha.{}_beta.{}_bs.{}'.format(args.task_name, args.student_hidden_layers,
+#                                                                             args.learning_rate,
+#                                                                             args.T, args.alpha, args.beta,
+#                                                                             args.train_batch_size * args.gradient_accumulation_steps)
 if args.do_train:
     global_step = 0
     nb_tr_steps = 0
@@ -303,14 +274,14 @@ if args.do_train:
                 print('{},{},{},{},{}'.format(epoch+1, global_step, step, tr_acc_1 / nb_tr_examples,
                                                        tr_loss / nb_tr_examples),
                       file=log_train)
-            if (epoch == 2):
+            if (epoch == 4):
                 logger.info("")
                 logger.info('='*77)
                 logger.info("Validation Loss : "+str(eval_loss_min)+" Validation Accuracy : "+str(eval_best_acc))
-                raise ValueError('%s KD not found, please use kd or kd.full' % args.kd)
+                raise ValueError('Skipping the rest epochs due to overfitting')
                 
                         
-            if (global_step % 2 == 1) & (epoch >0) :
+            if (global_step % 1 == 0) & (epoch >0) :
                 student_encoder.eval()
                 student_classifier.eval()
                 
@@ -351,11 +322,11 @@ if args.do_train:
                     eval_best_acc = eval_acc_1
                     if eval_best_acc > args.saving_criterion_acc:
                         if args.n_gpu > 1:
-                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_acc.pkl'))
-                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_acc.pkl'))
+                            torch.save(student_encoder.module.state_dict(), os.path.join(args.output_dir, 'PTP' + f'.encoder_acc.pkl'))
+                            torch.save(student_classifier.module.state_dict(), os.path.join(args.output_dir, 'PTP' + f'.cls_acc.pkl'))
                         else:
-                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_acc.pkl'))
-                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_acc.pkl'))
+                            torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, 'PTP' + f'.encoder_acc.pkl'))
+                            torch.save(student_classifier.state_dict(), os.path.join(args.output_dir, 'PTP' + f'.cls_acc.pkl'))
                         logger.info("Saving the model...")
                 
                 if eval_loss < eval_loss_min:
@@ -367,9 +338,9 @@ if args.do_train:
                     if eval_loss < args.saving_criterion_loss:
                         if args.n_gpu > 1:
                             torch.save(student_encoder.module.state_dict(), \
-                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.encoder_loss.pkl'))
+                                       os.path.join(args.output_dir, 'PTP' + f'.encoder_loss.pkl'))
                             torch.save(student_classifier.module.state_dict(), \
-                                       os.path.join(args.output_dir, output_model_file + f'_e.{epoch}.cls_loss.pkl'))
+                                       os.path.join(args.output_dir, 'PTP' + f'.cls_loss.pkl'))
                         
                         else:
                             torch.save(student_encoder.state_dict(), os.path.join(args.output_dir, output_model_file + f'.e.{epoch}_encoder_loss.pkl'))
