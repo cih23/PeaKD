@@ -14,7 +14,7 @@ from torch.utils.data import SequentialSampler
 # sys.path.append(PROJECT_FOLDER)
 
 from src import nli_data_processing
-from envs import PROJECT_FOLDER, HOME_DATA_FOLDER
+from envs import PROJECT_FOLDER, HOME_DATA_FOLDER, HOME_OUTPUT_FOLDER
 from BERT.pytorch_pretrained_bert.modeling import BertConfig
 from BERT.pytorch_pretrained_bert.tokenization import BertTokenizer
 from src.modeling import BertForSequenceClassificationEncoder, FCClassifierForSequenceClassification
@@ -56,9 +56,8 @@ n_layer = 12
 #specify the task.
 task = 'MRPC'
 #specify the directory of saved teacher model.
-encoder_file = "/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-1/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.encoder_acc.pkl"
-cls_file = "/home/ikhyuncho23/PeaKD/data/outputs/KD/MRPC/teacher_12layer/kd_MRPC_nlayer.12_lr.2e-05_T.10.0_alpha.0.0_beta.0.0_bs.64-run-1/MRPC_nlayer.12_lr.2e-05_T.10.0.alpha.0.0_beta.0.0_bs.64.cls_acc.pkl"
-
+encoder_file = os.path.join(HOME_OUTPUT_FOLDER, 'MRPC/run-1/BERT.encoder_loss.pkl')
+cls_file = os.path.join(HOME_OUTPUT_FOLDER, 'MRPC/run-1/BERT.cls_loss.pkl')
 
 encoder_bert, classifier = init_model(task, output_all_layers, n_layer, config)
 encoder_bert = load_model_wonbon(encoder_bert, encoder_file, args, 'exact', verbose=False)
