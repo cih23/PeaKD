@@ -1,5 +1,5 @@
 # Pea-KD : Parameter-efficient and accurate Knowledge Distillation
-This package provides an implementation of Pea-KD, which is to improve KD performance. This package is especially for BERT model.  
+This project is a PyTorch implementation of Pea-KD. This paper proposes a novel approach that improves Knowledge Distillation performance. This package is especially for BERT model.  
 
 ## Overview
 #### Brief Explanation of the paper. 
