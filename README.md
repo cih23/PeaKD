@@ -1,5 +1,5 @@
-# Pea-KD : Parameter-efficient and accurate Knowledge Distillation
-This project is a PyTorch implementation of Pea-KD. This paper proposes a novel approach that improves Knowledge Distillation performance. This package is especially for BERT model.  
+# Pea-KD 
+This project is a PyTorch implementation of Parameter-efficient and accurate Knowledge Distillation. This paper proposes a novel approach that improves Knowledge Distillation performance. This package is especially for BERT model.  
 
 ## Overview
 #### Brief Explanation of the paper. 
@@ -30,27 +30,35 @@ PTP labels
 ```  
 #### Baseline Codes
 This repository is based on the [GitHub repository](https://github.com/intersun/PKD-for-BERT-Model-Compression) for [Patient Knowledge Distillation for BERT Model Compression](https://arxiv.org/abs/1908.09355). All source files are from the repository if not mentioned otherwise. The main scripts that actually run tasks are the following two files, and they have been modified from the original files in the original repository:
-- 'NLI_KD_training.py'
-- 'run_glue_benchmark.py'
+- 'finetune.py', 'PTP.py' - based on 'NLI_KD_training.py' in the original repository.
+- 'save_teacher_outputs.py - based on 'run_glue_benchmark.py' in the original repository.
 
 ``` Unicode
-PeaKD        
-  ├── BERT
-  │    └── pytorch_pretrained_bert: BERT sturcture files
-  ├── data
-  │    ├── data_raw
-  │    │     ├── glue_data: task dataset
-  │    │     └── download_glue_data.py
-  │    ├── models
-  │    │     └── bert_base_uncased: ckpt
-  │    └── outputs
-  │           └── save teacher model prediction & trained student model.
-  ├── src : The overall utils. 
-  ├── envs.py: save directory paths for several usage.
-  ├── save_teacher_outputs.py : save teacher prediction. Used for PTP, KD, PKD e.t.c. 
-  ├── PTP.py : pretrain the student model with PTP. 
-  └── NLI_KD_training.py: comprehensive training file for teacher and student models.
-  
+PeaKD
+  │
+  ├──  src        
+  │     ├── BERT
+  │     │    └── pytorch_pretrained_bert: BERT sturcture files
+  │     ├── data
+  │     │    ├── data_raw
+  │     │    │     ├── glue_data: task dataset
+  │     │    │     └── download_glue_data.py
+  │     │    ├── models
+  │     │    │     └── bert_base_uncased: ckpt
+  │     │    └── outputs
+  │     │           └── save teacher model prediction & trained student model.
+  │     ├── utils : The overall utils. 
+  │     ├── envs.py: save directory paths for several usage.
+  │     ├── save_teacher_outputs.py : save teacher prediction. Used for PTP, KD, PKD e.t.c. 
+  │     ├── PTP.py : pretrain the student model with PTP. 
+  │     └── finetune.py: comprehensive training file for teacher and student models.
+  │
+  ├── preprocess.sh: downloads GLUE datasets.
+  ├── Makefile: Makefile used for demo.
+  ├── Developers_Guide.docx
+  ├── requirements.txt: run this file to download required environments.
+  ├── LICENSE
+  └── README.md
 ```
 
 #### Data description
@@ -58,12 +66,10 @@ PeaKD
 
 * Note that: 
     * GLUE datasets consists of CoLA, diagnostic, MNLI, MRPC, QNLI, QQP, RTE, SNLI, SST-2, STS-B, WNLI
-    * You can download GLUE datasets by KDAP/data/data_raw/download_glue_data.py
+    * You can download GLUE datasets by running bash 'preprocess.sh'.
 
-#### Output
-* The trained model will be saved in `data/outputs/PeaKD/{task}` after training.
 
-## Install
+## Install 
 
 #### Environment 
 * Ubuntu
@@ -76,28 +82,20 @@ PeaKD
 * pandas
 * apex
 
-
-
-
-# Getting Started
-
-## Clone the repository
-
-```
-git clone https://github.com/cih23/PeaKD
-cd PeaKD
-```
-
-## Install requirements
+## Dependence Install
 ```
 pip install -r requirements.txt
 ```
 
-## Download Glue data sets 
+# Getting Started
+
+## Preprocess
+Download GLUE datasets by running script:
 ```
-cd data/data_raw/
-python download_glue_data.py --data_dir glue_data --tasks all
+bash preprocess.sh
 ```
+You must download your own pretrained BERT model at 'src/data/models/pretrained/bert-base-uncased'. 
+Refer to 'src/BERT/pytorch_pretrained_bert/modeling.py' line 43~51.
 
 ## Demo 
 you can run the demo version.
@@ -115,11 +113,13 @@ make
     * train_seed: the train seed to use. If default -> random 
     * saving_criterion_acc: if the model's val accuracy is above this value, we save the model.
     * saving_criterion_loss: if the model's val loss is below this value, we save the model.
-    * load_model_dir: specify a directory of the checkpoint if you want to load it.
+    * load_model_dir: specify a directory of the checkpoint if you want to load one.
+    * output_dir: specify a directory where the outputs will be written and saved.
+    
 * First, We begin with finetuning the teacher model
     ```
     run script
-    python PeaKD/NLI_KD_training.py \
+    python src/finetune.py \
     --task 'MRPC' \
     --train_type 'ft' \
     --model_type 'Original' \
@@ -128,19 +128,19 @@ make
     --saving_criterion_loss 0 .6 \
     --output_dir 'run-1'
     ```
-    The trained model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'
+    The trained model will be saved in 'src/data/outputs/KD/{task}/teacher_12layer/'
 
-* To use the teacher model's predictions for example for PTP, KD, and PKD run script:
+* To use the teacher model's predictions for PTP, KD, and PKD run script:
     ```
-    python PeaKD/save_teacher_outputs.py
+    python src/save_teacher_outputs.py
     ```
-    The teacher predictions will be saved in 'PeaKD/data/outputs/KD/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
-    or 'PeaKD/data/outputs/KD/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
+    The teacher predictions will be saved in 'src/data/outputs/KD/{task}/{task}_normal_kd_teacher_12layer_result_summary.pkl'
+    or 'src/data/outputs/KD/{task}/{task}_patient_kd_teacher_12layer_result_summary.pkl'
 
 * To apply PTP to the student model, run script:
     ```
     run script:
-    python PeaKD/PTP.py \
+    python src/PTP.py \
     --task 'MRPC' \
     --train_type 'ft' \
     --model_type 'SPS' \
@@ -148,11 +148,11 @@ make
     --saving_criterion_acc 0.8 \
     --output_dir 'run-1'
     ```
-    The pretrained student model will be saved in 'PeaKD/data/outputs/KD/{task}/teacher_12layer/'. 
-    you may specify the hyperparameter 't' in PeaKD/src/nli_data_processing.py line 713~.
+    The pretrained student model will be saved in 'src/data/outputs/KD/{task}/teacher_12layer/'. 
+    you may specify the hyperparameter 't' in src/utils/nli_data_processing.py line 713~.
 * When PTP is done, we can finally finetune the student model by running script:
     ```
-    python PeaKD/NLI_KD_training.py \
+    python src/finetune.py \
     --task 'MRPC' \
     --train_type 'pkd' \
     --model_type 'SPS' \
