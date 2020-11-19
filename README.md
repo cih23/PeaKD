@@ -106,7 +106,7 @@ make
 ```
 
 ## Run your own training  
-* We provide an example how to run the codes. We use task: 'MRPC', teacher layer: 3, and student layer: 3 as an example.
+* We provide an example how to run the codes. We use task: 'MRPC', teacher layer: 12, and student layer: 3 as an example.
 * Before starting, we need to specify a few things.
     * task: one of the GLUE datasets
     * train_type: one of the followings - ft, kd, pkd 
